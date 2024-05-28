@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movies</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 20px 0;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #404448;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        button {
+            background-color: #404448;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2f3133;
+        }
+
+        #recommendations {
+            width: 80%;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script>
+        function submitRating(movieId, userId) {
+            const rating = document.getElementById(`rating-${movieId}`).value;
+            $.ajax({
+                url: '/submitRating',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    movie_id: movieId,
+                    user_id: userId,
+                    rating: rating
+                }),
+                success: function(response) {
+                    alert('Rating submitted successfully!');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+        // Function to get recommendations
+        function getRecommendations(userId) {
+            $.ajax({
+                url: `/recommendations/${userId}`,
+                type: 'GET',
+                success: function(response) {
+                    // Display recommendations
+                    displayRecommendations(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+        // Function to display recommendations
+        function displayRecommendations(recommendations) {
+            const recommendationsDiv = document.getElementById('recommendations');
+            recommendationsDiv.innerHTML = '<h2>Recommendations:</h2>';
+            const ul = document.createElement('ul');
+            recommendations.forEach(movie => {
+                const li = document.createElement('li');
+                li.textContent = `${movie.movieTitle} (${movie.movieType}) - Score: ${movie.score}`;
+                ul.appendChild(li);
+            });
+            recommendationsDiv.appendChild(ul);
+        }
+    </script>
+</head>
+<body>
+    <h1>Movies</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>USER</th>
+                <th>Movie ID</th>
+                <th>Title</th>
+                <th>Genre</th>
+                <th>Rating</th>
+                <th>Submit Rating</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movie in movies %}
+            <tr>
+                <td>{{ userId }}</td>
+                <td>{{ movie.movieId }}</td>
+                <td>{{ movie.movieTitle }}</td>
+                <td>{{ movie.movieType }}</td>
+                <td>
+                    <input type="number" id="rating-{{ movie.movieId }}" value="{{ movie.user_rating }}" min="0" max="5">
+                </td>
+                <td>
+                    <button onclick="submitRating('{{ movie.movieId }}', '{{ userId }}')">Submit</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <button id="getRecommendationsBtn" onclick="getRecommendations('{{ userId }}')">Get Recommendations</button>
+
+    <div id="recommendations"></div> 
+</body>
+</html>
