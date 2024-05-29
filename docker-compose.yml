@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+  app:
+    container_name: python-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DOCKER_ENV: "true"
+    ports:
+      - "5000:5000"
+    networks:
+      - my_network
+    depends_on: 
+      - redis
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.2.2
     environment:
@@ -8,6 +22,8 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2180:2180"
+    networks:
+      - my_network
 
   kafka:
     image: confluentinc/cp-kafka:7.2.2
@@ -15,6 +31,8 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
+    networks:
+      - my_network
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2180
@@ -23,20 +41,13 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    environment:
-      DOCKER_ENV: "true"
-    ports:
-      - "5000:5000"
-    depends_on: 77
-      - redis
-      
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
+    networks:
+      - my_network
 
-  
+networks:
+  my_network:
+    driver: bridge
