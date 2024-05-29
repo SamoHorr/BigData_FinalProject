@@ -31,7 +31,7 @@ services:
       DOCKER_ENV: "true"
     ports:
       - "5000:5000"
-    depends_on:
+    depends_on: 77
       - redis
       
   redis:
