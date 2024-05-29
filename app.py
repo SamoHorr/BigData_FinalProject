@@ -11,7 +11,7 @@ from recommendation_engine import get_recommendations
 from redis_caching import get_recommendations_cache
 app = Flask(__name__)
 
-# config
+# configuration 
 app.config["MONGO_URI"] = "mongodb://localhost:27017/"
 
 mongo = PyMongo(app)
