@@ -75,7 +75,7 @@
         {% for movie in movies %}
         <div class="movie-card">
             <p>Movie: {{movies.movieId }}</p>
-            <p>Rating: {{ movies.rating }}</p>
+            <p>Rating: {{ movie.rating | round(1) }}</p>
         </div>
         {% endfor %}
     </div>

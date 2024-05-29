@@ -6,39 +6,37 @@ import json
 from flask import Flask, jsonify, render_template, request, redirect, url_for
 from pymongo import MongoClient
 from flask_pymongo import PyMongo
-from confluent_kafka import Producer
+from kafka import KafkaProducer
 from recommendation_engine import get_recommendations
 from redis_caching import get_recommendations_cache
 app = Flask(__name__)
 
-# MongoDB connection
+# config
+# configuration 
 app.config["MONGO_URI"] = "mongodb://localhost:27017/"
+
 mongo = PyMongo(app)
+# MongoDB connection
 client = MongoClient('mongodb://localhost:27017/')
 db = client['MovieRecords']
 movies_collection = db['movie_records']
 movie_info = db['movie_info']
-
 # Redis connection
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
-
-#KafkaProducer
-producer_config = {
-    'bootstrap.servers': 'kafka:9092'
-}
-producer = Producer(**producer_config)
-
+# Initialize KafkaProducer
+producer = KafkaProducer(
+    bootstrap_servers='localhost:9092',
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+)
 # login display
 @app.route('/login')
 def login_form():
     return render_template('login.html')
-
 # login logic
 @app.route('/login', methods=['POST'])
 def login():
     print("login function")
     username = request.form['userID']
-
     # from db credential (userId)
     user = movies_collection.find({"userID": username})
     print(user)
@@ -48,13 +46,11 @@ def login():
     else:
         print("user id value incorrect")
         return redirect_stderr(url_for('login_form', error='Invalid username or password'))
-
 # display the movies in grid
 @app.route('/movies')
 def get_movies():
     movies = list(movies_collection.find({}, {'_id': 0}))
     return render_template('index.html', movies=movies)
-
 # display list depending on user
 @app.route('/moviesById')
 def get_user_movies():
@@ -69,9 +65,7 @@ def get_user_movies():
     else:
         movies_info = list(movie_info.find({}, {'_id': 0}))
     return render_template('index.html', movies=movies_info, userId=user_id)
-
-
-# send movie ratings
+# Endpoint to send movie ratings
 @app.route('/submitRating', methods=['POST'])
 def submit_rating():
     data = request.json
@@ -79,18 +73,15 @@ def submit_rating():
     user_id = data.get('user_id')
     rating = data.get('rating')
     
-    # print("rating value " + rating)
-    # print("movie_id value " + movie_id)
-    # print("user_id value " + user_id)
+    print("rating value " + rating)
+    print("movie_id value " + movie_id)
+    print("user_id value " + user_id)
     if not all([movie_id, user_id, rating]):
-        return jsonify({'error': 'Invalid or missing data'}), 400
-
+        return jsonify({'error': 'Invalid request data'}), 400
     # Send rating data to Kafka
     topic = 'ratings'
     rating_data = {'movie_id': movie_id, 'user_id': user_id, 'rating': rating}
-    producer.produce(topic, key=str(user_id), value=rating_data)
-    producer.flush()
-
+    producer.send(topic, rating_data)
     #updating the mongodb rating for the display
     userId_int = int(user_id)
     movieId_int = int(movie_id)
@@ -98,23 +89,23 @@ def submit_rating():
     result = movies_collection.update_many(
         {'userId': userId_int , 'movieId': movieId_int},
         {'$set': {'rating': rating_int}}, 
-        #if doesnt exist add new record
+        # #if doesnt exist add new record
         upsert=True
     )
-    # print("Matched documents:", result.matched_count)
-    # print("Modified documents:", result.modified_count)
-    # print("Upserted ID:", result.upserted_id)
+    print("Matched documents:", result.matched_count)
+    print("Modified documents:", result.modified_count)
+    print("Upserted ID:", result.upserted_id)
     return jsonify({'message': 'Rating submitted successfully'}), 200
-
 # #kafka consumer 
 # @app.route("/KafkaConsumer")
 # def send_recommendations():
 #     if()
-
-# view recommendations
+# Recommendation endpoint
 @app.route('/recommendations/<int:user_id>', methods=['GET'])
 def recommendations(user_id):
     # first version without redis
+    #  print("in the recommendations...")
+    #  print(user_id)
      
     #  try:
     #      recs = get_recommendations(user_id)
@@ -122,14 +113,18 @@ def recommendations(user_id):
     #  except Exception as e:
     #      print("An unexpected error occurred:", e)
     #      return jsonify({'error': str(e)}), 500
-
     #second version calling recommendation from redis caching logic file
     recommendations_response = get_recommendations_cache(user_id)
     print("in the recommendation_response of app.py")
     return recommendations_response
+    # if 'error' not in recommendations_response:
+    #     return jsonify(recommendations_response), 200
+    # else:
+    #     return jsonify(recommendations_response), 500
          
-
 if __name__ == '__main__':
     webbrowser.open('http://127.0.0.1:5000/login')
     app.run(debug=True)
-
+    print("http://127.0.0.1:5000/movies")
+    print("http://127.0.0.1:5000/login")
+    print("http://127.0.0.1:5000/moviesById")
