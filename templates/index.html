@@ -68,6 +68,10 @@
             background-color: #fff;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
+
+        .hide-column {
+            display: none;
+        }
     </style>
     <script>
         function submitRating(movieId, userId) {
@@ -124,8 +128,8 @@
     <table>
         <thead>
             <tr>
-                <th>USER</th>
-                <th>Movie ID</th>
+                <th class="hide-column">USER</th>
+                <th></th>
                 <th>Title</th>
                 <th>Genre</th>
                 <th>Rating</th>
@@ -135,7 +139,7 @@
         <tbody>
             {% for movie in movies %}
             <tr>
-                <td>{{ userId }}</td>
+                <td class="hide-column">{{ userId }}</td>
                 <td>{{ movie.movieId }}</td>
                 <td>{{ movie.movieTitle }}</td>
                 <td>{{ movie.movieType }}</td>

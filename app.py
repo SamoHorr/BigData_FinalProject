@@ -20,7 +20,7 @@ mongo = PyMongo(app)
 client = MongoClient('mongodb://localhost:27017/')
 db = client['MovieRecords']
 movies_collection = db['movie_records']
-movie_info = db['movie_info']
+movie_info = db['movie_infos']
 # Redis connection
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 # Initialize KafkaProducer
@@ -66,6 +66,7 @@ def get_user_movies():
         movies_info = list(movie_info.find({}, {'_id': 0}))
     return render_template('index.html', movies=movies_info, userId=user_id)
 # Endpoint to send movie ratings
+# Endpoint to send movie ratings
 @app.route('/submitRating', methods=['POST'])
 def submit_rating():
     data = request.json
@@ -78,10 +79,13 @@ def submit_rating():
     print("user_id value " + user_id)
     if not all([movie_id, user_id, rating]):
         return jsonify({'error': 'Invalid request data'}), 400
+
     # Send rating data to Kafka
+    print("Prepping kafka...")
     topic = 'ratings'
     rating_data = {'movie_id': movie_id, 'user_id': user_id, 'rating': rating}
     producer.send(topic, rating_data)
+    print("kafka producer sent...")
     #updating the mongodb rating for the display
     userId_int = int(user_id)
     movieId_int = int(movie_id)
@@ -92,10 +96,12 @@ def submit_rating():
         # #if doesnt exist add new record
         upsert=True
     )
-    print("Matched documents:", result.matched_count)
-    print("Modified documents:", result.modified_count)
-    print("Upserted ID:", result.upserted_id)
+    print("MongoDb updated....")
+    # print("Matched documents:", result.matched_count)
+    # print("Modified documents:", result.modified_count)
+    # print("Upserted ID:", result.upserted_id)
     return jsonify({'message': 'Rating submitted successfully'}), 200
+
 # #kafka consumer 
 # @app.route("/KafkaConsumer")
 # def send_recommendations():

@@ -51,7 +51,11 @@ def get_recommendations_cache(user_id):
             #return cached_recommendations
             cached_recommendations_str = cached_recommendations.decode('utf-8')
             cached_recommendations_str = cached_recommendations_str.replace("'", '"')
+            # cached_recommendations_str = cached_recommendations_str.replace("'", '"')
+            print("after decoding...")
+            print(cached_recommendations_str)
             recommendations = json.loads(cached_recommendations_str)
+            print("before return...")
             return jsonify(recommendations) , 200
         else:
             # If not generating them
@@ -59,7 +63,7 @@ def get_recommendations_cache(user_id):
             recs = get_recommendations(user_id)
             # Storing them in cache
             print("Storing in cache...")
-            redis_client.set(recommendations_cache_key, str(recs))
+            redis_client.setex(recommendations_cache_key, 1800 ,  str(recs))
             print("after client set...")
             return jsonify(recs), 200
             # return recs

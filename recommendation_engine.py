@@ -43,9 +43,9 @@ def get_recommendations(user_id, num_recommendations=5):
             score = row.rating
 
             # Fetching movie info from MongoDB
-            movie_info = db['movie_info'].find_one({"movieId": movie_id})
+            movie_info = db['movie_infos'].find_one({"movieId": movie_id})
             if movie_info:
-                movie_info['score'] = score 
+                movie_info['score'] =  round(score, 1) 
                 recommended_movies.append(movie_info)
     
     # Convert ObjectId fields to strings
