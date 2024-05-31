@@ -23,7 +23,7 @@ Brief overview:
 - index.html: displays the movie information , ratings (pop up for succesful submission) and on call recommendations
 - login.html: basic login page via user_id
 
-Steps in terminal:
+Steps in VS terminal: (after opening Docker Desktop)
 - Docker-compose up --build
 - venv\Scripts\activate
 - flask run
