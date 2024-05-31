@@ -5,13 +5,13 @@ import os
 
 # Initialize KafkaConsumer
 consumer = KafkaConsumer(
-    'ratings',
-    bootstrap_servers='localhost:9092',
-    auto_offset_reset='earliest',
-    enable_auto_commit=True,
-    group_id='ratings-consumer-group',
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-)
+        'ratings',  
+        bootstrap_servers=['kafka:29092'],
+        auto_offset_reset='earliest',
+        enable_auto_commit=True,
+        group_id='test-consumer-group',
+        value_deserializer=lambda x: json.loads(x.decode('utf-8'))
+    )
 
 print("Listening to the 'ratings' topic...")
 
@@ -36,7 +36,7 @@ with open(csv_file_path, mode='a', newline='') as csvfile:
             if msg_pack:
                 for tp, messages in msg_pack.items():
                     for message in messages:
-                        print(f"Received message: {message.value}")
+                        print(f"Message received: {message.value}")
                         writer.writerow(message.value)
             else:
                 print("No messages.")

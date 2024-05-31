@@ -11,7 +11,6 @@ from recommendation_engine import get_recommendations
 from redis_caching import get_recommendations_cache
 app = Flask(__name__)
 
-# config
 # configuration 
 app.config["MONGO_URI"] = "mongodb://localhost:27017/"
 
@@ -25,9 +24,11 @@ movie_info = db['movie_infos']
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 # Initialize KafkaProducer
 producer = KafkaProducer(
-    bootstrap_servers='localhost:9092',
+    bootstrap_servers=['kafka:29092'],
+    api_version=(0, 10, 0),
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
-)
+    )
+
 # login display
 @app.route('/login')
 def login_form():
@@ -69,44 +70,42 @@ def get_user_movies():
 # Endpoint to send movie ratings
 @app.route('/submitRating', methods=['POST'])
 def submit_rating():
+    print('in the submit rating button')
     data = request.json
     movie_id = data.get('movie_id')
     user_id = data.get('user_id')
     rating = data.get('rating')
-    
-    print("rating value " + rating)
-    print("movie_id value " + movie_id)
-    print("user_id value " + user_id)
+
     if not all([movie_id, user_id, rating]):
         return jsonify({'error': 'Invalid request data'}), 400
 
-    # Send rating data to Kafka
-    print("Prepping kafka...")
+    print("Before kafka...")
     topic = 'ratings'
     rating_data = {'movie_id': movie_id, 'user_id': user_id, 'rating': rating}
+    print(topic)
+    print("====rating data:")
+    print(rating_data)
     producer.send(topic, rating_data)
-    print("kafka producer sent...")
-    #updating the mongodb rating for the display
+    # try:
+    #     future = producer.send(topic, rating_data)
+    #     result = future.get(timeout=10)  
+    #     print("after sending kafka, result: ", result)
+    # except Exception as e:
+    #     print("Kafka producer send error:", e)
+    #     return jsonify({'error': 'Failed to send message to Kafka'}), 500
+
+    print("after sending kafka...")
     userId_int = int(user_id)
     movieId_int = int(movie_id)
     rating_int = int(rating)
     result = movies_collection.update_many(
         {'userId': userId_int , 'movieId': movieId_int},
         {'$set': {'rating': rating_int}}, 
-        # #if doesnt exist add new record
         upsert=True
     )
-    print("MongoDb updated....")
-    # print("Matched documents:", result.matched_count)
-    # print("Modified documents:", result.modified_count)
-    # print("Upserted ID:", result.upserted_id)
+    print("mongo updated...")
     return jsonify({'message': 'Rating submitted successfully'}), 200
 
-# #kafka consumer 
-# @app.route("/KafkaConsumer")
-# def send_recommendations():
-#     if()
-# Recommendation endpoint
 @app.route('/recommendations/<int:user_id>', methods=['GET'])
 def recommendations(user_id):
     # first version without redis
