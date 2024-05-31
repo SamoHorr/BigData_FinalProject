@@ -3,9 +3,9 @@ A flask application that is used for several movie services like submitting revi
 
 Project component: 
 - Docker containers
--Configuration files
--App code
--Html code
+- Configuration files
+- App code
+- Html code
 
 Docker is used to run four containers :
 - Zookeeper (running)
