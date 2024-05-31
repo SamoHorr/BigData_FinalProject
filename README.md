@@ -1,4 +1,4 @@
-Big Data Final Project:
+ Big Data Final Project:
 A flask application that is used for several movie services like submitting reviews for movies & getting custom recommendations based on these reviews.
 
 Project component: 
