@@ -10,6 +10,7 @@ Project component:
 Docker is used to run four containers :
 - Zookeeper (running)
 - Kafka (running)
+- init kafka (running) [topic creation if needed]
 - redis (running)
 - python app (work in progress)
 
