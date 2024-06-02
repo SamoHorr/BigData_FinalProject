@@ -116,11 +116,11 @@ def submit_rating():
 #consuming and saving the submitted ratings
 @app.route('/consume')
 def consume():
-    result = ratings_consumer()
-    if result:
-        return jsonify({'message': 'Ratings consumed successfully'}), 200
-    else:
-        return jsonify({'message': 'No ratings to consume or an error occurred'}), 500
+     result = ratings_consumer()
+     if result:
+         return jsonify({'message': 'Ratings consumed successfully'}), 200
+     else:
+         return jsonify({'message': 'No ratings to consume or an error occurred'}), 500
     
 #generating user based recommendations
 @app.route('/recommendations/<int:user_id>', methods=['GET'])

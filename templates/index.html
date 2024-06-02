@@ -137,6 +137,7 @@
         });
 
         function submitRating(movieId, userId) {
+            console.log("submit rating pressed...")
             const rating = document.getElementById(`rating-${movieId}`).value;
             $.ajax({
                 url: '/submitRating',
