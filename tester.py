@@ -30,11 +30,12 @@ from confluent_kafka import Producer
 import json
 
 producer_config = {
-    'bootstrap.servers': 'kafka:29092'
+    'bootstrap.servers': 'localhost:9092'
 }
 
 producer = Producer(**producer_config)
 
+print('AFTER...')
 def delivery_report(err, msg):
     if err is not None:
         print(f"Message delivery failed: {err}")
@@ -43,4 +44,17 @@ def delivery_report(err, msg):
 
 def produce_message(message):
     producer.produce('ratings', key=str(message['user_id']), value=json.dumps(message), callback=delivery_report)
+    print('message delivered: ' + str(message))
     producer.flush()
+
+def main():
+    message = {
+        'user_id': 1,
+        'movie_id': 2,
+        'rating': 5
+    }
+
+    produce_message(message)
+
+if __name__ == '__main__':
+    main()

@@ -120,6 +120,22 @@
         }
     </style>
     <script>
+        //script contains functions that use the api for the services
+
+        // always running onload rating consumer
+        $(document).ready(function() {
+            $.ajax({
+                url: '/consume',
+                type: 'GET',
+                success: function(response) {
+                    console.log('Ratings consumed successfully:', response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error consuming ratings:', error);
+                }
+            });
+        });
+
         function submitRating(movieId, userId) {
             const rating = document.getElementById(`rating-${movieId}`).value;
             $.ajax({
@@ -141,7 +157,6 @@
         }
 
         function getRecommendations(userId) {
-            // Show the loader when the button is clicked
             document.getElementById("loader").style.display = "block";
             document.getElementById("recommendations").style.display = "none";
             
@@ -149,15 +164,14 @@
                 url: `/recommendations/${userId}`,
                 type: 'GET',
                 success: function(response) {
-                    // Hide the loader and display the recommendations
                     document.getElementById("loader").style.display = "none";
                     document.getElementById("recommendations").style.display = "block";
                     displayRecommendations(response);
                 },
                 error: function(xhr, status, error) {
                     console.error('Error:', error);
-                    // Hide the loader even if there is an error
                     document.getElementById("loader").style.display = "none";
+                    document.getElementById("recommendations").textContent = "Error while retrieving. Please try again later"
                 }
             });
         }

@@ -1,46 +1,57 @@
-from kafka import KafkaConsumer
+from confluent_kafka import Consumer, KafkaError
 import json
 import csv
 import os
 
-# Initialize KafkaConsumer
-consumer = KafkaConsumer(
-        'ratings',  
-        bootstrap_servers=['kafka:29092'],
-        auto_offset_reset='earliest',
-        enable_auto_commit=True,
-        group_id='test-consumer-group',
-        value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-    )
+def ratings_consumer():
+    # Configure Kafka Consumer
+    consumer_config = {
+        'bootstrap.servers': 'localhost:9092',
+        'group.id': 'test-consumer-group',
+        'auto.offset.reset': 'earliest'
+    }
 
-print("Listening to the 'ratings' topic...")
+    consumer = Consumer(consumer_config)
+    consumer.subscribe(['ratings'])
 
-# Define the CSV file path
-csv_file_path = 'ratings.csv'
+    print("Listening to the 'ratings' topic...")
 
-# Check if the file exists to determine if the header needs to be written
-file_exists = os.path.isfile(csv_file_path)
+    # verifying directory
+    csv_directory = 'ratings'
+    if not os.path.exists(csv_directory):
+        os.makedirs(csv_directory)
 
-# Open the CSV file in append mode
-with open(csv_file_path, mode='a', newline='') as csvfile:
-    fieldnames = ['user_id', 'movie_id', 'rating']
-    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    # Saving the message
+    csv_file_path = os.path.join(csv_directory, 'ratings.csv')
+    file_exists = os.path.isfile(csv_file_path)
+    with open(csv_file_path, mode='a', newline='') as csvfile:
+        fieldnames = ['user_id', 'movie_id', 'rating']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-    # Write the header only if the file does not exist
-    if not file_exists:
-        writer.writeheader()
+        # only if file doesn't exist
+        if not file_exists:
+            writer.writeheader()
 
-    try:
-        while True:
-            msg_pack = consumer.poll(timeout_ms=1000)
-            if msg_pack:
-                for tp, messages in msg_pack.items():
-                    for message in messages:
-                        print(f"Message received: {message.value}")
-                        writer.writerow(message.value)
-            else:
-                print("No messages.")
-    except KeyboardInterrupt:
-        print("Consumer stopped.")
-    finally:
-        consumer.close()
+        try:
+            while True:
+                msg = consumer.poll(timeout=1.0)
+                if msg is None:
+                    print("No messages...")
+                    continue
+                if msg.error():
+                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                        print('End of partition reached {0}/{1}'.format(msg.topic(), msg.partition()))
+                    elif msg.error():
+                        print(f"Consumer error: {msg.error()}")
+                else:
+                    try:
+                        message = json.loads(msg.value().decode('utf-8'))
+                        print(f"Message received: {message}")
+                        writer.writerow(message)
+                        csvfile.flush()
+                    except Exception as e:
+                        print(f"Error processing message: {e}")
+        except KeyboardInterrupt:
+            print("Consumer stopped.")
+        finally:
+            consumer.close()
