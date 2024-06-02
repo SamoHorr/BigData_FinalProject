@@ -26,13 +26,9 @@ Brief overview:
 - login.html: basic login page via user_id
 
 Steps in VS terminal: (after opening Docker Desktop)
-terminal 1:
-- Docker-compose up --build
-terminal 2:
+
+- Docker-compose up -d
 - venv\Scripts\activate
 - flask run
- terminal 3:
-- venv\Scripts\activate
-- python consumer.py
   
 - webbrowser: http://127.0.0.1:5000/login
