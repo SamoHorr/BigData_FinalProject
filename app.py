@@ -24,10 +24,11 @@ movie_info = db['movie_infos']
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 # Initialize KafkaProducer
 producer = KafkaProducer(
-    bootstrap_servers=['kafka:29092'],
+    # bootstrap_servers=['kafka:9092'],
+    bootstrap_servers='localhost:9092',
     api_version=(0, 10, 0),
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
-    )
+)
 
 # login display
 @app.route('/login')
